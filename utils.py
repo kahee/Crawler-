@@ -10,8 +10,6 @@ def get_top100_list(refresh_html=False):
 
     (crawler디렉토리):
     os.path.dirname(os.path.abspath(__name__))
-    1~50위:   data/chart_realtime_50.html
-    51~100위: data/chart_realtime_100.html
     :return:
    """
     # 프로젝트 컨테이너 폴더 경로
@@ -24,31 +22,20 @@ def get_top100_list(refresh_html=False):
     os.makedirs(path_data_dir,exist_ok=True)
 
     # data/ 폴더 경로
-    url_chart_realtime_50='http://www.melon.com/chart/index.htm'
-    url_chart_realtime_100 = 'http://www.melon.com/chart/index.htm#params%5Bidx%5D=51'
-    response = requests.get(url_chart_realtime_50)
-    source = response.text
-    file_path = os.path.join(path_data_dir, 'chart_realtime_50.html')
+    url_chart_realtime='http://www.melon.com/chart/index.htm'
+
+    file_path = os.path.join(path_data_dir, 'chart_realtime.html')
     try:
-        with open(file_path, 'xt') as f:
-            response = requests.get(url_chart_realtime_100)
-            source = response.text
-            f.write(source)
+            file_mode  = 'wt' if refresh_html else 'xt'
+            with open(file_path, file_mode) as f:
+                response = requests.get(url_chart_realtime)
+                source = response.text
+                f.write(source)
+
+
     except FileExistsError as e:
         print(f'"{file_path}" file is already exisits!')
 
-    try:
-
-
-    file_path = os.path.join(path_data_dir, 'chart_realtime_100.html')
-    if not os.path.exists(file_path):
-        response = requests.get(url_chart_realtime_100)
-        source = response.text
-        with open(file_path,'wt') as f:
-            f.wirte(source)
-
-    else:
-        print(f'"{file_path}"file is already exists!')
 
 
 # melon_chart50 = list()
