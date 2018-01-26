@@ -2,7 +2,7 @@ import os
 import re
 
 import requests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, NavigableString
 
 # utils가 있는
 PATH_MODULE = os.path.abspath(__file__)
@@ -108,19 +108,43 @@ def get_song_detail(song_id, refresh_html=False):
 
     source = open(file_path,'rt').read()
     soup = BeautifulSoup(source,'lxml')
-    div_entry = soup.find('div', class_="entry")
-    title = div_entry.find('div', class_='song_name').strong.next_sibling.strip()
-    # title2 = soup.find('div', class_='song_name').get_text(strip = True)[2:]
-    artist = div_entry.find('div', class_ = 'artist').get_text(strip=True)
-    # elbum, release, genre
-    dl = soup.find('div', class_="meta").find('dl')
-   # isinstance(instance,class(type))
-    items = [item.get_text(strip='True') for item in dl.contents if not isinstance(item,str)]
 
-     # items_dict = dict([item,items[itmes.index(item)+1] for item in items[::2]])
+    div_entry = soup.find('div', class_='entry')
+    title = div_entry.find('div', class_='song_name').strong.next_sibling.strip()
+    artist = div_entry.find('div', class_='artist').get_text(strip=True)
+    # 앨범, 발매일, 장르...에 대한 Description list
+    dl = div_entry.find('div', class_='meta').find('dl')
+    # isinstance(인스턴스, 클래스(타입))
+    # items = ['앨범', '앨범명', '발매일', '발매일값', '장르', '장르값']
+    items = [item.get_text(strip=True) for item in dl.contents if not isinstance(item, str)]
     it = iter(items)
     description_dict = dict(zip(it, it))
 
     album = description_dict.get('앨범')
     release_date = description_dict.get('발매일')
     genre = description_dict.get('장르')
+
+    div_lyrics = soup.find('div', id='d_video_summary')
+
+    lyrics_list = []
+    for item in div_lyrics:
+        if item.name == 'br':
+            lyrics_list.append('\n')
+        elif type(item) is NavigableString:
+            lyrics_list.append(item.strip())
+    lyrics = ''.join(lyrics_list)
+
+    return {
+        'title': title,
+        'artist': artist,
+        'album': album,
+        'release_date': release_date,
+        'genre': genre,
+        'lyrics': lyrics,
+        # 작사/작곡은 주말 숙제 포함
+        'producers': {
+            '작사': ['별들의 전쟁'],
+            '작곡': ['David Amber', 'Sean Alexander'],
+            '편곡': ['Avenue52'],
+        },
+    }
