@@ -61,6 +61,9 @@ def get_top100_list(refresh_html=False):
         artist = tr.find('div', class_='rank02').find('a').text
         album = tr.find('div', class_='rank03').find('a').text
         url_img_cover = tr.find('a', class_='image_typeAll').find('img').get('src')
+        song_id_href = tr.find('a',class_='song_info').get('href')
+        song_id = re.search(r"\('(\d+)'\)", song_id_href).group(1)
+
         # http://cdnimg.melon.co.kr/cm/album/images/101/28/855/10128855_500.jpg/melon/resize/120/quality/80/optimize
         # .* -> 임의 문자의 최대 반복
         # \. -> '.' 문자
@@ -69,10 +72,34 @@ def get_top100_list(refresh_html=False):
         url_img_cover = re.search(p, url_img_cover).group(1)
 
         result.append({
+            'song_id': song_id,
             'rank': rank,
             'title': title,
             'url_img_cover': url_img_cover,
             'artist': artist,
             'album': album,
         })
+
     return result
+
+
+def get_song_detail(song_id):
+    """
+    song_id에 해당하는 곡 정보 dict를 반환
+    위의 get_top100_list의 각 곡 정보에도 song_id가 들어가도록 추가
+
+    http://www.melon.com/song/detail.htm?songId=30755375
+    위 링크를 참조
+
+    파일명
+        song_detail_{song_id}.html
+
+    :param song_id: 곡 정보 dict
+    :return:
+    """
+    url = f'https://www.melon.com/song/detail.htm'
+    params = {
+        'song_Id' : song_id,
+    }
+    response = requests.get(url,params)
+    soup = BeautifulSoup(response.text,'lxml')
