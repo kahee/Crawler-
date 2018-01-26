@@ -11,7 +11,7 @@ PATH_MODULE = os.path.abspath(__file__)
 ROOT_DIR = os.path.dirname(PATH_MODULE)
 
 # data/ 폴더 경로
-PATH_DATA_DIR = os.path.join(ROOT_DIR, 'data')
+DATA_DIR= os.path.join(ROOT_DIR, 'data')
 
 def get_top100_list(refresh_html=False):
     """
@@ -23,13 +23,13 @@ def get_top100_list(refresh_html=False):
     """
 
     # 만약에 path_data_dir에 해당하는 폴더가 없을 경우 생성해준다
-    os.makedirs(PATH_DATA_DIR, exist_ok=True)
+    os.makedirs(DATA_DIR, exist_ok=True)
 
     # 실시간 1~100위 웹페이지 주소
     url_chart_realtime = 'https://www.melon.com/chart/index.htm'
 
     # 실시간 1~100위 웹페이지 HTML을 data/chart_realtime.html 에 저장
-    file_path = os.path.join(PATH_DATA_DIR, 'chart_realtime.html')
+    file_path = os.path.join(DATA_DIR, 'chart_realtime.html')
     try:
         # refresh_html매개변수가 True일 경우, wt모드로 파일을 열어 새로 파일을 다운받도록 함
         file_mode = 'wt' if refresh_html else 'xt'
@@ -80,7 +80,7 @@ def get_top100_list(refresh_html=False):
     return result
 
 
-def get_song_detail(song_id):
+def get_song_detail(song_id, refresh_html = False):
     """
     song_id에 해당하는 곡 정보 dict를 반환
     위의 get_top100_list의 각 곡 정보에도 song_id가 들어가도록 추가
@@ -92,12 +92,19 @@ def get_song_detail(song_id):
         song_detail_{song_id}.html
 
     :param song_id: 곡 정보 dict
+    :param refresh_html : already download file check
     :return:
     """
-
-    url = f'https://www.melon.com/song/detail.htm'
-    params = {
-        'song_Id' : song_id,
-    }
-    response = requests.get(url,params)
-    soup = BeautifulSoup(response.text,'lxml')
+    file_path = os.path.join(DATA_DIR, f'song_detail_{song_id}.html')
+    try:
+        file_mode = 'wt' if refresh_html else 'xt'
+        with open(file_path, file_mode) as f:
+            url = f'https://www.melon.com/song/detail.htm'
+            params = {
+                'song_Id': song_id,
+            }
+            response = requests.get(url, params)
+            source = response.text
+            f.write(source)
+    except FileExistsError:
+        print(f'"{file_path}" file is already exists!')
