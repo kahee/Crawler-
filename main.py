@@ -1,7 +1,9 @@
-from utils import get_top100_list, get_song_detail
+from utils import get_top100_list, get_song_detail, search_song
 
 if __name__ == '__main__':
-    result = get_top100_list()
-    for item in result:
-        print(f'{item["rank"]:3}: {item["title"]}')
-    result_detail = get_song_detail('30755375')
+    # result = get_top100_list()
+    # for item in result:
+    #     print(f'{item["rank"]:3}: {item["title"]}')
+    # result_detail = get_song_detail('30755375')
+      song = search_song("빨간맛")
+      print(song)

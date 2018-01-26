@@ -148,3 +148,43 @@ def get_song_detail(song_id, refresh_html=False):
             '편곡': ['Avenue52'],
         },
     }
+
+
+def search_song(title):
+    """
+    곡 명으로 멜론에서 검색한 결과 리스트를 리턴
+    :param title: 검색할 곡 명
+    :return: 결과 dict리스트
+    """
+    """
+    1. http://www.melon.com/search/song/index.htm
+        에 q={title}, section=song으로 parameter를 준 URL에
+        requests를 사용해 요청
+    2. response.text를 사용해 BeautifulSoup인스턴스 soup생성
+    3. soup에서 적절히 결과를 가공
+    4. 결과 1개당 dict한개씩 구성
+    5. 전부 리스트에 넣어 반환
+    6. 완☆성
+    """
+    url = 'https://www.melon.com/search/song/index.htm'
+    params = {
+        'q': title,
+        'section': 'song',
+    }
+    response = requests.get(url, params)
+    soup = BeautifulSoup(response.text, 'lxml')
+    tr_list = soup.select('form#frm_defaultList table > tbody > tr')
+
+    result = []
+    for tr in tr_list:
+        title = tr.select_one('td:nth-of-type(3) a.fc_gray').get_text(strip=True)
+        artist = tr.select_one('td:nth-of-type(4) span.checkEllipsisSongdefaultList').get_text(
+            strip=True)
+        album = tr.select_one('td:nth-of-type(5) a').get_text(strip=True)
+
+        result.append({
+            'title': title,
+            'artist': artist,
+            'album': album,
+        })
+    return result
