@@ -108,6 +108,19 @@ def get_song_detail(song_id, refresh_html=False):
 
     source = open(file_path,'rt').read()
     soup = BeautifulSoup(source,'lxml')
-    title = soup.find('div', class_='song_name').strong.next_sibling.strip()
+    div_entry = soup.find('div', class_="entry")
+    title = div_entry.find('div', class_='song_name').strong.next_sibling.strip()
     # title2 = soup.find('div', class_='song_name').get_text(strip = True)[2:]
+    artist = div_entry.find('div', class_ = 'artist').get_text(strip=True)
+    # elbum, release, genre
+    dl = soup.find('div', class_="meta").find('dl')
+   # isinstance(instance,class(type))
+    items = [item.get_text(strip='True') for item in dl.contents if not isinstance(item,str)]
 
+     # items_dict = dict([item,items[itmes.index(item)+1] for item in items[::2]])
+    it = iter(items)
+    description_dict = dict(zip(it, it))
+
+    album = description_dict.get('앨범')
+    release_date = description_dict.get('발매일')
+    genre = description_dict.get('장르')
