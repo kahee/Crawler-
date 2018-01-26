@@ -4,6 +4,14 @@ import re
 import requests
 from bs4 import BeautifulSoup
 
+# utils가 있는
+PATH_MODULE = os.path.abspath(__file__)
+
+# 프로젝트 컨테이너 폴더 경로
+ROOT_DIR = os.path.dirname(PATH_MODULE)
+
+# data/ 폴더 경로
+PATH_DATA_DIR = os.path.join(ROOT_DIR, 'data')
 
 def get_top100_list(refresh_html=False):
     """
@@ -13,26 +21,15 @@ def get_top100_list(refresh_html=False):
     :param refresh_html: True일 경우, 무조건 새 HTML파일을 사이트에서 받아와 덮어씀
     :return: 곡 정보 dict의 list
     """
-    # utils가 있는
-    path_module = os.path.abspath(__name__)
-    print(f'path_module: \n{path_module}')
-
-    # 프로젝트 컨테이너 폴더 경로
-    root_dir = os.path.dirname(path_module)
-    print(f'root_dir: \n{root_dir}')
-
-    # data/ 폴더 경로
-    path_data_dir = os.path.join(root_dir, 'data')
-    print(f'path_data_dir: \n{path_data_dir}')
 
     # 만약에 path_data_dir에 해당하는 폴더가 없을 경우 생성해준다
-    os.makedirs(path_data_dir, exist_ok=True)
+    os.makedirs(PATH_DATA_DIR, exist_ok=True)
 
     # 실시간 1~100위 웹페이지 주소
     url_chart_realtime = 'https://www.melon.com/chart/index.htm'
 
     # 실시간 1~100위 웹페이지 HTML을 data/chart_realtime.html 에 저장
-    file_path = os.path.join(path_data_dir, 'chart_realtime.html')
+    file_path = os.path.join(PATH_DATA_DIR, 'chart_realtime.html')
     try:
         # refresh_html매개변수가 True일 경우, wt모드로 파일을 열어 새로 파일을 다운받도록 함
         file_mode = 'wt' if refresh_html else 'xt'
@@ -97,6 +94,7 @@ def get_song_detail(song_id):
     :param song_id: 곡 정보 dict
     :return:
     """
+
     url = f'https://www.melon.com/song/detail.htm'
     params = {
         'song_Id' : song_id,
