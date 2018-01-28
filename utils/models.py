@@ -136,7 +136,7 @@ class Artist:
         self._award_history =[]
         self._introduction = {}
         self._activity_information = {}
-        # self._personal_information = {}
+        self._personal_information = {}
         # self._related_information = {}
 
 
@@ -219,6 +219,24 @@ class Artist:
             }
             self._activity_information = activity_information
 
+            # _personal_information
+            dl_list_define = soup.find('div', class_="section_atistinfo04").find('dl', class_='list_define')
+
+            personal_list = list()
+            for index, i in enumerate(dl_list_define.find_all("dd")):
+                personal_list.append(i.get_text(strip=True))
+
+            personal_information = {
+                "본명": personal_list[0],
+                "별명": personal_list[1],
+                "국적": personal_list[2],
+                "생일": personal_list[3],
+                "별자리": personal_list[4],
+                "혈액형":personal_list[5]
+            }
+            self._personal_information = personal_information
+
+
 
 
 
@@ -264,5 +282,4 @@ class Artist:
                 'info' : info,
                 'genre': genre
             })
-
         return result
