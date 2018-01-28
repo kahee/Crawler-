@@ -6,4 +6,4 @@ if __name__ == '__main__':
     artist = Artist("아이유","dsf","sdfs",None)
     artist.get_detail(261143)
 
-    print(artist._personal_information)
+    print(artist._related_information)

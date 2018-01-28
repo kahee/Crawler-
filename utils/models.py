@@ -137,7 +137,7 @@ class Artist:
         self._introduction = {}
         self._activity_information = {}
         self._personal_information = {}
-        # self._related_information = {}
+        self._related_information = {}
 
 
     def get_detail(self, artist_id, refresh_html=False):
@@ -235,6 +235,32 @@ class Artist:
                 "혈액형":personal_list[5]
             }
             self._personal_information = personal_information
+
+            # _related_information
+            dl_list_define = soup.find('div', class_="section_atistinfo05")
+            # sns
+            buttons = dl_list_define.find_all('button', type="button")
+
+            sns_address = list()
+            for i in buttons:
+                address = re.search(r".*\('(.*?)?'", i.get('onclick'))
+                sns_address.append(address.group(1))
+
+            related_information = {
+                "SNS": f'트위터 ({sns_address[0]}), 페이스북 ({sns_address[1]})'
+            }
+
+            # 그외 계정들
+            dd_find = dl_list_define.find('dl', class_="list_define").find_all("dd")
+            other_address = list()
+            for i in dd_find:
+                other_address.append(i.text)
+            related_information["YouTube"] = other_address[0]
+            related_information["팬카페"] = other_address[1]
+
+            self._related_information = related_information
+
+
 
 
 
