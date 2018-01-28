@@ -135,18 +135,11 @@ class Artist:
         self._info={}
         self._award_history =[]
         self._introduction = {}
-        # self._activity_information = {}
+        self._activity_information = {}
         # self._personal_information = {}
         # self._related_information = {}
-        pass
-    """
-    아티스트 상세 정보
-    http://www.melon.com/artist/detail.htm?artistId=261143
-    artist_detail_{artist_id}.html
-    Artist의 인스턴스 메서드
-    def get_detail(self)
-        return 없이 자신의 속성 채우기
-    """
+
+
     def get_detail(self, artist_id, refresh_html=False):
 
         file_path = os.path.join(DATA_DIR, f'artist_detail_{artist_id}.html')
@@ -181,12 +174,12 @@ class Artist:
             self.artist_id = artist_id
             self.name = name
             self.real_name = real_name
-            result = list()
-            result.append({'데뷔': debut,
+            result = dict()
+            result = {'데뷔': debut,
                             '생일': birthday,
                             '활동유형':artist_type,
                             '소속사':agency,
-                            '수상이력':award})
+                            '수상이력':award}
             self._info = result
 
             #_award_history
@@ -198,7 +191,6 @@ class Artist:
 
              #_introduction
             div_artist_intro = soup.find('div', id ="d_artist_intro")
-
             introduction_list = list()
             for i in div_artist_intro:
                 if i.name == 'br':
@@ -209,23 +201,32 @@ class Artist:
             introduction = ''.join(introduction_list)
             self._introduction = introduction
 
+            # _activity_information
+            dl_list_define = soup.find('div', class_="section_atistinfo03").find('dl', class_='list_define')
+
+            activity_list = list()
+            for index, i in enumerate(dl_list_define.find_all("dd")):
+                activity_list.append(i.get_text(strip=True))
+
+            activity_information = {
+                "데뷔": activity_list[0],
+                "활동년대":activity_list[1],
+                "유형":activity_list[2],
+                "장르":activity_list[3],
+                "소속사명":activity_list[4],
+                "소속그룹":
+                activity_list[5]
+            }
+            self._activity_information = activity_information
 
 
 
 
 
-    """
-    아티스트 검색
-http://www.melon.com/search/artist/index.htm?q=%EC%95%84%EC%9D%B4%EC%9C%A0&section=&searchGnbYn=Y&kkoSpl=N&kkoDpType=&ipath=srch_form
-검색 결과를
-def search_artist(q):
-    return class Artist의 목록
-    """
-    def search_artist(self, artist, refresh_html = False):
+
+    def search_artist(self,artist, refresh_html = False):
         # search_song instance method
-
         # artist-> self.artist 로 바꿔야함
-
         file_path = os.path.join(DATA_DIR, f'artist_{artist}.html')
         try:
             file_mode = 'wt' if refresh_html else 'xt'
