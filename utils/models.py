@@ -116,8 +116,128 @@ class Song:
 
         self.title = title
         self.artist = artist
-        self.album  = album
+        self.album = album
         self._release_date = release_date
         self._genre = genre
         self._lyrics = lyrics
         self._producers = {}
+
+
+class Artist:
+
+
+    def __init__(self,artist_id,name,url_img_cover,real_name):
+        self.artist_id = artist_id
+        self.name = name
+        self.url_img_cover = url_img_cover
+        self.real_name = None
+
+        self._info={}
+        # self._award_history =[]
+        # self._introduction = {}
+        # self._activity_information = {}
+        # self._personal_information = {}
+        # self._related_information = {}
+        pass
+    """
+    아티스트 상세 정보
+    http://www.melon.com/artist/detail.htm?artistId=261143
+    artist_detail_{artist_id}.html
+    Artist의 인스턴스 메서드
+    def get_detail(self)
+        return 없이 자신의 속성 채우기
+    """
+    def get_detail(self, artist_id, refresh_html=False):
+
+        file_path = os.path.join(DATA_DIR, f'artist_detail_{artist_id}.html')
+        try:
+            file_mode = 'wt' if refresh_html else 'xt'
+            with open(file_path, file_mode) as f:
+                # 아티스트 목록 가져오는 html
+                url = 'https://www.melon.com/artist/detail.htm'
+                params = {
+                    'artistId': artist_id
+                }
+                response = requests.get(url, params)
+                source = response.text
+                f.write(source)
+        except FileExistsError:
+            print(f'"{file_path}" file is already exists!')
+
+            source = open(file_path, 'rt').read()
+            soup = BeautifulSoup(source, 'lxml')
+
+            # 기본 정보 _info
+            wrap_dtl_atist = soup.find('div', class_='wrap_dtl_atist')
+            url_img_cover = wrap_dtl_atist.find('span', id="artistImgArea").find('img').get('src')
+            name_div = wrap_dtl_atist.select_one('p.title_atist ').text[5:]
+            name = re.search(r'(\w+)\s',name_div).group(1)
+            real_name = re.search(r'\((\w+)\)', name_div).group(1)
+            debut = wrap_dtl_atist.select_one('dl.atist_info > dd:nth-of-type(1)').get_text(strip=True)[:10]
+            birthday = wrap_dtl_atist.select_one('dl.atist_info > dd:nth-of-type(2)').get_text(strip=True)
+            artist_type = wrap_dtl_atist.select_one('dl.atist_info > dd:nth-of-type(3)').get_text(strip=True)
+            agency = wrap_dtl_atist.select_one('dl.atist_info > dd:nth-of-type(4)').get_text(strip=True)
+            award = wrap_dtl_atist.select_one('dl.atist_info > dd:nth-of-type(5)').get_text(strip=True)
+            self.artist_id = artist_id
+            self.name = name
+            self.real_name = real_name
+            result = list()
+            result.append({'데뷔': debut,
+                            '생일': birthday,
+                            '활동유형':artist_type,
+                            '소속사':agency,
+                            '수상이력':award})
+            self._info = result
+
+
+    """
+    아티스트 검색
+http://www.melon.com/search/artist/index.htm?q=%EC%95%84%EC%9D%B4%EC%9C%A0&section=&searchGnbYn=Y&kkoSpl=N&kkoDpType=&ipath=srch_form
+검색 결과를
+def search_artist(q):
+    return class Artist의 목록
+    """
+    def search_artist(self, artist, refresh_html = False):
+        # search_song instance method
+
+        # artist-> self.artist 로 바꿔야함
+
+        file_path = os.path.join(DATA_DIR, f'artist_{artist}.html')
+        try:
+            file_mode = 'wt' if refresh_html else 'xt'
+            with open(file_path, file_mode) as f:
+                # 아티스트 목록 가져오는 html
+                url = 'https://www.melon.com/search/artist/index.htm'
+                params = {
+                    'q': artist,
+                    'section': 'searchGnbYn'
+                }
+                response = requests.get(url, params)
+                source = response.text
+                f.write(source)
+        except FileExistsError:
+            print(f'"{file_path}" file is already exists!')
+
+        source = open(file_path, 'rt').read()
+        soup = BeautifulSoup(source, 'lxml')
+
+        atist_info = soup.find_all('div', class_='atist_info')
+        result = []
+        for i in atist_info:
+            # 아티스트 고유번호
+            artist_id_href = i.find('a', class_="ellipsis").get('href')
+            artist_id = re.search(r"\('(\d+)'\);", artist_id_href).group(1)
+            # 아티스트 이름
+            artist = i.find('a', class_="ellipsis").text
+            # 아티스트 정보
+            info = i.find('dd', class_="gubun").get_text(strip=True)
+            # 아티스트 장르
+            genre = i.find('dd', class_="gnr").get_text(strip=True)[4:]
+            result.append({
+                'artist_id': artist_id,
+                'artist' : artist,
+                'info' : info,
+                'genre': genre
+            })
+
+        return result
