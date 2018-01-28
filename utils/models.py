@@ -139,6 +139,25 @@ class Artist:
         self._personal_information = {}
         self._related_information = {}
 
+    @property
+    def info(self):
+        return self._info
+    @property
+    def award_history(self):
+        return self._award_history
+    @property
+    def introduction(self):
+        return self._introduction
+    @property
+    def activity_information(self):
+        return self._activity_information
+    @property
+    def personal_information(self):
+        return self._personal_information
+    @property
+    def related_information(self):
+        return self._related_information
+
 
     def get_detail(self, artist_id, refresh_html=False):
 
