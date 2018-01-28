@@ -134,7 +134,7 @@ class Artist:
 
         self._info={}
         self._award_history =[]
-        # self._introduction = {}
+        self._introduction = {}
         # self._activity_information = {}
         # self._personal_information = {}
         # self._related_information = {}
@@ -192,11 +192,23 @@ class Artist:
             #_award_history
             list_define = soup.find('dl', class_="list_define").find_all("dd")
             for i in list_define:
-                # 수상 (수상내역) 형식으로 변
+                # 수상 (수상내역) 형식으로 변경
                 award_detail = re.search(r'(.*?)\|(.*)', i.text)
-                print(award_detail.group(1))
-                print(award_detail.group(2))
                 self._award_history.append(f'{award_detail.group(1)} ({award_detail.group(2)})')
+
+             #_introduction
+            div_artist_intro = soup.find('div', id ="d_artist_intro")
+
+            introduction_list = list()
+            for i in div_artist_intro:
+                if i.name == 'br':
+                    introduction_list.append('\n')
+                elif type(i) is NavigableString:
+                    introduction_list.append(i.strip())
+
+            introduction = ''.join(introduction_list)
+            self._introduction = introduction
+
 
 
 
