@@ -133,7 +133,7 @@ class Artist:
         self.real_name = None
 
         self._info={}
-        # self._award_history =[]
+        self._award_history =[]
         # self._introduction = {}
         # self._activity_information = {}
         # self._personal_information = {}
@@ -188,6 +188,18 @@ class Artist:
                             '소속사':agency,
                             '수상이력':award})
             self._info = result
+
+            #_award_history
+            list_define = soup.find('dl', class_="list_define").find_all("dd")
+            for i in list_define:
+                # 수상 (수상내역) 형식으로 변
+                award_detail = re.search(r'(.*?)\|(.*)', i.text)
+                print(award_detail.group(1))
+                print(award_detail.group(2))
+                self._award_history.append(f'{award_detail.group(1)} ({award_detail.group(2)})')
+
+
+
 
 
     """
