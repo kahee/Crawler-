@@ -1,5 +1,4 @@
 import re
-
 import os
 import requests
 from bs4 import BeautifulSoup, NavigableString
@@ -124,8 +123,6 @@ class Song:
 
 
 class Artist:
-
-
     def __init__(self,artist_id,name,url_img_cover,real_name):
         self.artist_id = artist_id
         self.name = name
@@ -182,9 +179,10 @@ class Artist:
             # 기본 정보 _info
             wrap_dtl_atist = soup.find('div', class_='wrap_dtl_atist')
             url_img_cover = wrap_dtl_atist.find('span', id="artistImgArea").find('img').get('src')
-            name_div = wrap_dtl_atist.select_one('p.title_atist ').text[5:]
+            name_div = wrap_dtl_atist.select_one('p.title_atist').text[5:]
             name = re.search(r'(\w+)\s',name_div).group(1)
             real_name = re.search(r'\((\w+)\)', name_div).group(1)
+
             debut = wrap_dtl_atist.select_one('dl.atist_info > dd:nth-of-type(1)').get_text(strip=True)[:10]
             birthday = wrap_dtl_atist.select_one('dl.atist_info > dd:nth-of-type(2)').get_text(strip=True)
             artist_type = wrap_dtl_atist.select_one('dl.atist_info > dd:nth-of-type(3)').get_text(strip=True)
@@ -193,13 +191,17 @@ class Artist:
             self.artist_id = artist_id
             self.name = name
             self.real_name = real_name
-            result = dict()
+
             result = {'데뷔': debut,
-                            '생일': birthday,
-                            '활동유형':artist_type,
-                            '소속사':agency,
-                            '수상이력':award}
+                      '생일': birthday,
+                      '활동유형':artist_type,
+                      '소속사':agency,
+                      '수상이력':award,
+                      '이미지' : url_img_cover
+                      }
+
             self._info = result
+
 
             #_award_history
             list_define = soup.find('dl', class_="list_define").find_all("dd")
@@ -208,7 +210,7 @@ class Artist:
                 award_detail = re.search(r'(.*?)\|(.*)', i.text)
                 self._award_history.append(f'{award_detail.group(1)} ({award_detail.group(2)})')
 
-             #_introduction
+            #_introduction
             div_artist_intro = soup.find('div', id ="d_artist_intro")
             introduction_list = list()
             for i in div_artist_intro:
@@ -233,8 +235,7 @@ class Artist:
                 "유형":activity_list[2],
                 "장르":activity_list[3],
                 "소속사명":activity_list[4],
-                "소속그룹":
-                activity_list[5]
+                "소속그룹":activity_list[5]
             }
             self._activity_information = activity_information
 
@@ -280,13 +281,6 @@ class Artist:
             self._related_information = related_information
 
 
-
-
-
-
-
-
-
     def search_artist(self,artist, refresh_html = False):
         # search_song instance method
         # artist-> self.artist 로 바꿔야함
@@ -328,3 +322,32 @@ class Artist:
                 'genre': genre
             })
         return result
+
+
+    """
+    아티스트의 곡
+    http://www.melon.com/artist/song.htm?artistId=261143
+    Artist의 인스턴스 메서드
+        def get_songs(self)
+            return Song의 list
+    """
+    def get_songs(self, artist_id):
+
+        url = 'http://www.melon.com/artist/song.htm'
+        params = {
+            'artistId': artist_id
+        }
+        response = requests.get(url, params)
+        soup = BeautifulSoup(response.text, 'lxml')
+        tr_list = soup.select('form#frm table > tbody > tr')
+
+        result = []
+        for tr in tr_list:
+            song_id = tr.select_one('td:nth-of-type(1) input[type=checkbox]').get("value")
+            title = tr.select_one('td:nth-of-type(3) a.fc_gray').get_text(strip=True)
+            artist = tr.select_one('td:nth-of-type(4) span.checkEllipsisSongdefaultList').get_text(
+                strip=True)
+            album = tr.select_one('td:nth-of-type(5) a').get_text(strip=True)
+        print(song_id,title,artist,album)
+
+        print(result)
