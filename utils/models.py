@@ -17,16 +17,15 @@ Artist의 인스턴스 메서드
         return Song의 list
 """
 import os
+import re
 
 import requests
 from bs4 import BeautifulSoup, NavigableString
 
 # utils가 있는
 PATH_MODULE = os.path.abspath(__file__)
-
 # 프로젝트 컨테이너 폴더 경로
 ROOT_DIR = os.path.dirname(os.path.dirname(PATH_MODULE))
-
 # data/ 폴더 경로
 DATA_DIR = os.path.join(ROOT_DIR, 'data')
 
@@ -176,7 +175,8 @@ class Song:
 
 class Artist:
 
-    def __init__(self, artist_id, name, url_img_cover):
+    def __init__(self, artist_id, name, url_img_cover, real_name):
+        pass
         self.artist_id = artist_id
         self.name = name
         self.url_img_cover = url_img_cover
@@ -189,14 +189,110 @@ class Artist:
         self._personal_information = {}
         self._related_information = {}
 
+    def get_detail(self, artist_id, refresh_html=False):
+        file_path = os.path.join(DATA_DIR, f'artist_detail_{artist_id}.html')
+        try:
+            file_mode = 'wt' if refresh_html else 'xt'
+            with open(file_path, file_mode) as f:
+                # 아티스트 목록 가져오는 html
+                url = 'https://www.melon.com/artist/detail.htm'
+                params = {
+                    'artistId': artist_id
+                }
+                response = requests.get(url, params)
+                source = response.text
+                f.write(source)
+        except FileExistsError:
+            print(f'"{file_path}" file is already exists!')
 
-"""
-아티스트 상세 정보
-http://www.melon.com/artist/detail.htm?artistId=261143
-artist_detail_{artist_id}.html
-Artist의 인스턴스 메서드
-    def get_detail(self)
-        return 없이 자신의 속성 채우기
-"""
-    def get_detail(self):
+        source = open(file_path, 'rt').read()
+        soup = BeautifulSoup(source, 'lxml')
+
+
+        # award_history
+        div_section_atistinfo01 = soup.find('div', class_="section_atistinfo01")
+        if not div_section_atistinfo01 == None:
+            dl = div_section_atistinfo01.find('dl', class_='list_define')
+            award_history = [item.get_text(strip=True) for item in dl.contents if not isinstance(item, str)]
+            self._award_history = award_history
+
+
+        # _introduction = {}
+        div_section_atistinfo02 = soup.find('div', class_= "section_atistinfo02")
+        if not div_section_atistinfo02 == None:
+            div = div_section_atistinfo02.find('div', id='d_artist_intro')
+            introduction_list = list()
+            for i in div:
+                if i.name == 'br':
+                    introduction_list.append('\n')
+                elif type(i) is NavigableString:
+                    introduction_list.append(i.strip())
+
+            introduction = ''.join(introduction_list)
+            self._introduction = introduction
+
+        # _activity_information = {}
+        div_section_atistinfo03 = soup.find('div' , class_ = "section_atistinfo03")
+        if not div_section_atistinfo03 == None:
+            dl = div_section_atistinfo03.find('dl', class_='list_define')
+            items = [item.get_text(strip=True) for item in dl.contents if not isinstance(item, str)]
+            '''
+            iterable은 멤버를 하나씩 반환 할 수 있는 object 를 의미한다. 
+            '''
+            # 나중에 info 에 여기있는 정보를 넣어주면 될꺼같다
+            it = iter(items)
+            activity_information = dict(zip(it, it))
+            self._activity_information = activity_information
+
+            div_section_atistinfo04 = soup.find('div', class_="section_atistinfo04")
+            #_personal_information
+        if not div_section_atistinfo04 == None:
+            dl = div_section_atistinfo04.find('dl', class_='list_define')
+            items = [item.get_text(strip=True) for item in dl.contents if not isinstance(item, str)]
+            li = iter(items)
+            personal_information = dict(zip(li,li))
+            self._personal_information = personal_information
+
+            div_section_atistinfo05 = soup.find('div', class_="section_atistinfo05")
+            # _related_information
+            if not div_section_atistinfo05 == None:
+                button_sns = div_section_atistinfo05.find_all('button')
+                address = [re.search(r".*\('(.*?)?'", item.get('onclick')).group(1) for item in button_sns]
+                sns_name = [item.get_text() for item in button_sns]
+                related_information_first = dict(zip(sns_name,address))
+                dl = div_section_atistinfo05.find('dl', class_='list_define')
+                items = [item.get_text(strip=True) for item in dl.contents if not isinstance(item, str)]
+                it = iter(items)
+                # 딕셔너리두개를 한개로 병합  Unpacking Generalizations
+                related_information_second = dict(zip(it, it))
+                related_information = {**related_information_first, **related_information_second}
+                self._related_information = related_information
+
+                # 기본 info 이미지, 이름, 본명
+                wrap_dtl_atist = soup.find('div', class_='wrap_dtl_atist')
+                url_img_cover = wrap_dtl_atist.find('span', id="artistImgArea").find('img').get('src')
+                # 이미지가 없을 경우에는 url 주소가 없는 것처럼
+                if url_img_cover == "http://cdnimg.melon.co.kr":
+                    url_img_cover = ""
+                name_div = wrap_dtl_atist.select_one('p.title_atist').text[5:]
+                name = re.search(r'(\w+)\s', name_div).group(1)
+                real_name = re.search(r'\((\w+)\)', name_div).group(1)
+                self.url_img_cover = url_img_cover
+                self.name = name
+                self.real_name = real_name
+                self.artist_id = artist_id
+                # 그외 정보는 다른 딕셔너리와 리스트에서 추출
+                debut = activity_information['데뷔']
+                birthday = personal_information['생일']
+                activity_type = activity_information['유형']
+                agency = activity_information['소속사명']
+                self._info = {
+                    "데뷔": debut,
+                    "생일": birthday,
+                    "유형": activity_type,
+                    "소속사": agency,
+                    "수상이력": award_history[0]}
+
+
+
 
